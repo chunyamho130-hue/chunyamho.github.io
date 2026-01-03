@@ -1,512 +1,365 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="zh-Hant-HK">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>教會愛心時分券系統</title>
-    <!-- Tailwind CSS for styling -->
+    <title>大埔火災社會資源整合平台</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        
         body {
             font-family: 'Noto Sans TC', sans-serif;
             background-color: #f3f4f6;
+            color: #333;
         }
-        .fade-in {
-            animation: fadeIn 0.3s ease-in-out;
+
+        .hero-pattern {
+            background-color: #b91c1c;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23991b1b' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
         }
+
+        .card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-btn.active {
+            border-bottom: 3px solid #b91c1c;
+            color: #b91c1c;
+            font-weight: 700;
+        }
+
+        .section-hidden {
+            display: none;
+        }
+        
+        .section-active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        /* Hide scrollbar for category list */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 h-screen flex flex-col">
+<body class="flex flex-col min-h-screen">
 
-    <!-- Notification Toast -->
-    <div id="toast-container" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 pointer-events-none opacity-0 translate-y-[-20px]">
-        <div id="toast-message" class="bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3">
-            <i class="fas fa-check-circle text-green-400"></i>
-            <span>操作成功</span>
-        </div>
-    </div>
-
-    <!-- Mobile Header -->
-    <header class="bg-white shadow-sm sticky top-0 z-10">
-        <div class="max-w-3xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
-                    <i class="fas fa-church"></i>
-                </div>
-                <h1 class="text-lg font-bold text-gray-800">教會時分市集</h1>
+    <!-- Header -->
+    <header class="hero-pattern text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-hands-holding-circle"></i>
+                    大埔火災社會資源整合平台
+                </h1>
+                <p class="text-xs md:text-sm text-red-100 mt-1">匯集政府、社福機構及民間支援資訊</p>
             </div>
-            <div class="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
-                <i class="fas fa-clock text-blue-600 text-sm"></i>
-                <span id="header-balance" class="font-bold text-blue-800">0</span>
-                <span class="text-xs text-blue-600">時分</span>
-            </div>
+            <button onclick="document.getElementById('emergency-modal').classList.remove('hidden')" class="bg-white text-red-700 hover:bg-red-50 px-4 py-2 rounded-full font-bold text-sm shadow-md transition animate-pulse">
+                <i class="fa-solid fa-phone-volume mr-1"></i> 緊急求助
+            </button>
         </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main id="main-content" class="flex-1 overflow-y-auto pb-24 max-w-3xl mx-auto w-full">
-        <!-- Dynamic Content Injected Here -->
-    </main>
+    <!-- Emergency Notice Banner -->
+    <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+        <div class="container mx-auto flex items-start">
+            <i class="fa-solid fa-circle-info mt-1 mr-3"></i>
+            <div>
+                <p class="font-bold">最新消息 (2026年1月)</p>
+                <p class="text-sm">政府已啟動「大埔宏福苑援助基金」，社署正推行「一戶一社工」服務。如需即時協助，請致電社署熱線 <strong>182 183</strong>。</p>
+            </div>
+        </div>
+    </div>
 
-    <!-- Bottom Navigation -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20">
-        <div class="max-w-3xl mx-auto flex justify-around items-center h-16">
-            <button onclick="router('market')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-blue-600 hover:bg-gray-50 transition-colors" data-target="market">
-                <i class="fas fa-store mb-1 text-xl"></i>
-                <span class="text-xs font-medium">物資市集</span>
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-6">
+        
+        <!-- Navigation Tabs -->
+        <div class="flex overflow-x-auto whitespace-nowrap border-b border-gray-200 mb-6 pb-1 gap-4 md:gap-8 no-scrollbar">
+            <button onclick="switchTab('gov')" class="tab-btn active px-2 py-2 text-gray-600 hover:text-red-700 transition">
+                <i class="fa-solid fa-landmark mr-1"></i> 政府支援
             </button>
-            <button onclick="router('profile')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 hover:bg-gray-50 transition-colors" data-target="profile">
-                <i class="fas fa-user mb-1 text-xl"></i>
-                <span class="text-xs font-medium">我的帳戶</span>
+            <button onclick="switchTab('financial')" class="tab-btn px-2 py-2 text-gray-600 hover:text-red-700 transition">
+                <i class="fa-solid fa-hand-holding-dollar mr-1"></i> 經濟援助
             </button>
-            <button onclick="router('admin')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 hover:bg-gray-50 transition-colors" data-target="admin">
-                <i class="fas fa-cog mb-1 text-xl"></i>
-                <span class="text-xs font-medium">同工後台</span>
+            <button onclick="switchTab('housing')" class="tab-btn px-2 py-2 text-gray-600 hover:text-red-700 transition">
+                <i class="fa-solid fa-house-chimney mr-1"></i> 住宿與物資
+            </button>
+            <button onclick="switchTab('ngo')" class="tab-btn px-2 py-2 text-gray-600 hover:text-red-700 transition">
+                <i class="fa-solid fa-hand-holding-heart mr-1"></i> 社福機構
+            </button>
+            <button onclick="switchTab('emotional')" class="tab-btn px-2 py-2 text-gray-600 hover:text-red-700 transition">
+                <i class="fa-solid fa-heart-pulse mr-1"></i> 心理/醫療
             </button>
         </div>
-    </nav>
 
-    <!-- Javascript Logic -->
+        <!-- Section: Government Support -->
+        <div id="gov" class="section-active space-y-4">
+            <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-blue-600 card">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fa-solid fa-building-user text-blue-600 mr-2"></i> 社會福利署 (SWD)
+                </h2>
+                <ul class="space-y-3 text-gray-700">
+                    <li class="flex items-start">
+                        <i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i>
+                        <div>
+                            <strong>「一戶一社工」服務：</strong><br>
+                            社署已主動接觸受影響住戶，提供個案跟進服務。尚未聯絡的居民請盡快致電熱線。
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i>
+                        <div>
+                            <strong>綜合家庭服務中心：</strong><br>
+                            大埔及北區的綜合家庭服務中心開放特別櫃位，協助居民申請各類津貼及輔導。
+                        </div>
+                    </li>
+                </ul>
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <a href="tel:182183" class="inline-flex items-center text-blue-600 font-bold hover:underline">
+                        <i class="fa-solid fa-phone mr-2"></i> 社署熱線：182 183
+                    </a>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-blue-600 card">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fa-solid fa-city text-blue-600 mr-2"></i> 民政事務總署 (HAD)
+                </h2>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="bg-gray-50 p-4 rounded">
+                        <h3 class="font-bold text-gray-800 mb-2">臨時庇護中心</h3>
+                        <p class="text-sm text-gray-600">大埔民政事務處已開放臨時庇護中心供有需要居民暫住。請留意政府最新公佈的開放地點。</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded">
+                        <h3 class="font-bold text-gray-800 mb-2">跨部門援助站</h3>
+                        <p class="text-sm text-gray-600">設於受影響屋苑附近或社區會堂，提供一站式登記及資訊查詢服務。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Financial Aid -->
+        <div id="financial" class="section-hidden space-y-4">
+            <div class="grid md:grid-cols-2 gap-4">
+                <!-- Govt Fund -->
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500 card">
+                    <h2 class="text-lg font-bold text-gray-800 mb-2">大埔宏福苑援助基金</h2>
+                    <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full mb-2 inline-block">政府專項</span>
+                    <ul class="text-sm text-gray-600 space-y-2 mt-2">
+                        <li>• <strong>生活津貼：</strong> 每戶$100,000 (已提升金額)</li>
+                        <li>• <strong>慰問金：</strong> 每名死者家屬$200,000</li>
+                        <li>• <strong>殮葬金：</strong> 每名死者家屬$50,000</li>
+                        <li>• <strong>業主租金補助：</strong> 每年$150,000 (為期兩年)</li>
+                    </ul>
+                </div>
+
+                <!-- Jockey Club -->
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-900 card">
+                    <h2 class="text-lg font-bold text-gray-800 mb-2">賽馬會緊急援助基金</h2>
+                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mb-2 inline-block">慈善基金</span>
+                    <ul class="text-sm text-gray-600 space-y-2 mt-2">
+                        <li>• <strong>遇難者家屬：</strong> $150,000</li>
+                        <li>• <strong>重傷者：</strong> $100,000</li>
+                        <li>• <strong>搬遷津貼：</strong> $10,000 - $15,000 (視乎家庭人數)</li>
+                        <li class="text-xs text-gray-500 mt-2">*可透過社署或營運過渡性房屋的機構申請</li>
+                    </ul>
+                </div>
+
+                <!-- Oxfam -->
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-600 card">
+                    <h2 class="text-lg font-bold text-gray-800 mb-2">樂施會「同毅同行」</h2>
+                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mb-2 inline-block">NGO支援</span>
+                    <p class="text-sm text-gray-600 mb-2">提供簡化申請程序的緊急現金支援。</p>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• <strong>緊急現金：</strong> 每戶$5,000</li>
+                        <li>• <strong>查詢 WhatsApp：</strong> 7020 5150</li>
+                    </ul>
+                </div>
+
+                 <!-- Red Cross -->
+                 <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500 card">
+                    <h2 class="text-lg font-bold text-gray-800 mb-2">香港紅十字會</h2>
+                    <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full mb-2 inline-block">緊急現金</span>
+                    <p class="text-sm text-gray-600 mb-2">透過「Red Cash Card」八達通發放。</p>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• <strong>家庭：</strong> 每戶$6,000</li>
+                        <li>• <strong>外傭：</strong> 每人$3,000</li>
+                        <li>• <strong>查詢熱線：</strong> 3155 5188</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Housing & Material -->
+        <div id="housing" class="section-hidden space-y-4">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card">
+                <div class="bg-indigo-600 px-6 py-4">
+                    <h2 class="text-white font-bold text-lg"><i class="fa-solid fa-bed mr-2"></i> 住宿安置</h2>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div class="border-b pb-4">
+                            <h3 class="font-bold text-indigo-700">過渡性房屋</h3>
+                            <p class="text-sm text-gray-600 mt-1">房屋局協調多個過渡性房屋項目（如：啟航1331、寶田中轉房屋）提供單位。社署社工會協助有需要家庭進行配對及轉介。</p>
+                        </div>
+                        <div class="border-b pb-4">
+                            <h3 class="font-bold text-indigo-700">酒店/賓館安置</h3>
+                            <p class="text-sm text-gray-600 mt-1">民政及青年事務局協調部分酒店及青年宿舍提供臨時住宿。適合短期急需棲身之所的居民。</p>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-indigo-700">交通支援</h3>
+                            <p class="text-sm text-gray-600 mt-1">針對入住偏遠過渡性房屋的居民，運輸署已協調營辦商增設居民巴士線（如：往返大埔善樓至大埔中心/醫院）。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card">
+                <div class="bg-orange-500 px-6 py-4">
+                    <h2 class="text-white font-bold text-lg"><i class="fa-solid fa-box-open mr-2"></i> 物資支援</h2>
+                </div>
+                <div class="p-6 grid md:grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="font-bold text-orange-700">樂餉社 (Feeding Hong Kong)</h3>
+                        <p class="text-sm text-gray-600 mt-1">設立「同心協力助大埔食物銀行」，分發食品包及飲品。</p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-orange-700">物資捐贈平台</h3>
+                        <p class="text-sm text-gray-600 mt-1">政府與業界合作建立的網上平台，配對市民捐贈的傢俬、電器及日用品給受影響家庭。</p>
+                    </div>
+                    <div class="col-span-1 md:col-span-2 mt-2 bg-orange-50 p-3 rounded text-sm text-orange-800">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> 注意：請透過社工或官方渠道登記物資需求，以免重覆領取或資源錯配。
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: NGO Support -->
+        <div id="ngo" class="section-hidden space-y-4">
+            <div class="grid gap-4">
+                <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 flex flex-col md:flex-row md:items-center justify-between card">
+                    <div>
+                        <h3 class="font-bold text-lg text-gray-800">香港社會服務聯會 (社聯)</h3>
+                        <p class="text-sm text-gray-600">協調超過80個社福單位，提供跨專業支援及樂齡科技器材（如輪椅、醫療床）。</p>
+                    </div>
+                    <a href="https://www.hkcss.org.hk" target="_blank" class="mt-3 md:mt-0 text-center bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded text-sm font-medium transition">
+                        瀏覽網站
+                    </a>
+                </div>
+
+                <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 flex flex-col md:flex-row md:items-center justify-between card">
+                    <div>
+                        <h3 class="font-bold text-lg text-gray-800">世界宣明會 & 同在坊</h3>
+                        <p class="text-sm text-gray-600">提供生活必需品、組織互助小組，並重點支援兒童心理健康（遊戲治療）。</p>
+                    </div>
+                     <span class="mt-3 md:mt-0 text-sm text-gray-500"><i class="fa-solid fa-phone mr-1"></i> 聯絡相關社工轉介</span>
+                </div>
+
+                <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 flex flex-col md:flex-row md:items-center justify-between card">
+                    <div>
+                        <h3 class="font-bold text-lg text-gray-800">仁濟醫院 / 保良局 / 東華三院</h3>
+                        <p class="text-sm text-gray-600">各大善團均設有緊急援助基金，提供經濟及善後支援。可直接向相關機構查詢。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Emotional Support -->
+        <div id="emotional" class="section-hidden space-y-4">
+             <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-pink-500 card">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">心理及情緒支援服務</h2>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <a href="tel:31555188" class="block p-4 border border-pink-100 rounded hover:bg-pink-50 transition group">
+                        <div class="font-bold text-pink-700 group-hover:text-pink-800"><i class="fa-solid fa-phone mr-2"></i>紅十字會心理支援</div>
+                        <div class="text-sm text-gray-600 mt-1">提供急救及災後心理輔導服務。</div>
+                        <div class="text-lg font-bold text-gray-800 mt-1">3155 5188</div>
+                    </a>
+                    
+                    <a href="tel:182183" class="block p-4 border border-blue-100 rounded hover:bg-blue-50 transition group">
+                        <div class="font-bold text-blue-700 group-hover:text-blue-800"><i class="fa-solid fa-user-doctor mr-2"></i>社署熱線 (情緒支援)</div>
+                        <div class="text-sm text-gray-600 mt-1">由社工接聽，轉介臨床心理學家跟進。</div>
+                        <div class="text-lg font-bold text-gray-800 mt-1">182 183</div>
+                    </a>
+
+                    <div class="p-4 border border-gray-100 rounded bg-gray-50">
+                        <div class="font-bold text-gray-700"><i class="fa-solid fa-hands-holding-child mr-2"></i>兒童及青少年支援</div>
+                        <div class="text-sm text-gray-600 mt-1">
+                            <strong>賽馬會「摯伴行」基金：</strong><br>
+                            支援18歲或以下喪親兒童。由聖公會福利協會營運。<br>
+                            <span class="text-gray-800 font-medium"><i class="fa-brands fa-whatsapp mr-1"></i> 5978 5687</span>
+                        </div>
+                    </div>
+
+                    <div class="p-4 border border-gray-100 rounded bg-gray-50">
+                        <div class="font-bold text-gray-700"><i class="fa-solid fa-tooth mr-2"></i>免費牙科服務</div>
+                        <div class="text-sm text-gray-600 mt-1">
+                            醫務衞生局統籌，為受影響居民提供因火災導致的牙具破損修復或緊急口腔治療。
+                        </div>
+                    </div>
+                </div>
+             </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-400 py-6 text-center text-sm">
+        <p class="mb-2">免責聲明：本頁面資訊彙整自互聯網公開資料及政府/機構新聞稿，僅供參考。</p>
+        <p>實際申請資格及詳情請以各機構官方公佈為準。</p>
+        <p class="mt-4 text-xs">最後更新日期：2026年1月</p>
+    </footer>
+
+    <!-- Emergency Modal -->
+    <div id="emergency-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-sm w-full p-6 animate-bounce-in">
+            <h3 class="text-xl font-bold text-red-600 mb-4 flex items-center"><i class="fa-solid fa-triangle-exclamation mr-2"></i> 緊急求助熱線</h3>
+            <div class="space-y-3">
+                <a href="tel:999" class="block w-full text-center bg-red-600 text-white py-3 rounded font-bold text-lg hover:bg-red-700">
+                    報警/火警：999
+                </a>
+                <a href="tel:182183" class="block w-full text-center bg-blue-600 text-white py-3 rounded font-bold text-lg hover:bg-blue-700">
+                    社署熱線：182 183
+                </a>
+                <a href="tel:31555188" class="block w-full text-center bg-white border-2 border-red-500 text-red-500 py-3 rounded font-bold text-lg hover:bg-red-50">
+                    紅十字會：3155 5188
+                </a>
+            </div>
+            <button onclick="document.getElementById('emergency-modal').classList.add('hidden')" class="mt-4 w-full text-center text-gray-500 text-sm hover:text-gray-700">
+                關閉
+            </button>
+        </div>
+    </div>
+
     <script>
-        // --- Data Management (Simulating Backend) ---
-        const DB_KEY = 'church_timebank_v1';
-        
-        const initialData = {
-            user: {
-                id: 'u001',
-                name: '陳弟兄',
-                balance: 15, // Initial points
-                history: [
-                    { id: 1, type: 'earn', title: '兒童主日學服事', amount: 5, date: '2023-10-25' },
-                    { id: 2, type: 'earn', title: '愛筵洗碗', amount: 10, date: '2023-10-20' }
-                ]
-            },
-            items: [
-                { id: 1, title: '有機白米 (5kg)', cost: 10, stock: 3, category: '食品', image: 'rice', color: 'bg-orange-100' },
-                { id: 2, title: '全新保溫瓶', cost: 8, stock: 5, category: '生活', image: 'bottle', color: 'bg-blue-100' },
-                { id: 3, title: '二手木結他', cost: 50, stock: 1, category: '樂器', image: 'guitar', color: 'bg-yellow-100' },
-                { id: 4, title: '屬靈書籍: 活出美好', cost: 5, stock: 10, category: '書籍', image: 'book', color: 'bg-green-100' },
-                { id: 5, title: '超市現金券 ($50)', cost: 25, stock: 0, category: '禮券', image: 'coupon', color: 'bg-red-100' },
-                { id: 6, title: '手工曲奇餅', cost: 3, stock: 15, category: '食品', image: 'cookie', color: 'bg-orange-50' }
-            ],
-            categories: ['全部', '食品', '生活', '書籍', '樂器', '禮券']
-        };
-
-        // Load data or initialize
-        let db = JSON.parse(localStorage.getItem(DB_KEY)) || initialData;
-
-        function saveDB() {
-            localStorage.setItem(DB_KEY, JSON.stringify(db));
-            updateHeader();
-        }
-
-        function updateHeader() {
-            document.getElementById('header-balance').textContent = db.user.balance;
-        }
-
-        // --- Toast Notification ---
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const msgBox = document.getElementById('toast-message');
+        function switchTab(tabId) {
+            // Hide all sections
+            document.querySelectorAll('[id^="gov"], [id^="financial"], [id^="housing"], [id^="ngo"], [id^="emotional"]').forEach(el => {
+                el.className = 'section-hidden';
+            });
             
-            let icon = 'fa-check-circle';
-            let color = 'text-green-400';
-            
-            if (type === 'error') {
-                icon = 'fa-times-circle';
-                color = 'text-red-400';
+            // Show selected section
+            const selectedSection = document.getElementById(tabId);
+            if (selectedSection) {
+                selectedSection.className = 'section-active space-y-4';
             }
 
-            msgBox.innerHTML = `<i class="fas ${icon} ${color}"></i><span>${message}</span>`;
-            
-            container.classList.remove('opacity-0', 'translate-y-[-20px]');
-            container.classList.add('opacity-100', 'translate-y-0');
-            
-            setTimeout(() => {
-                container.classList.add('opacity-0', 'translate-y-[-20px]');
-                container.classList.remove('opacity-100', 'translate-y-0');
-            }, 2500);
-        }
-
-        // --- View Renderers ---
-
-        function renderMarket(filterCategory = '全部') {
-            const main = document.getElementById('main-content');
-            
-            // Generate Categories HTML
-            const categoriesHtml = db.categories.map(cat => 
-                `<button onclick="renderMarket('${cat}')" 
-                    class="px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors
-                    ${cat === filterCategory ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200'}">
-                    ${cat}
-                </button>`
-            ).join('');
-
-            // Filter Items
-            const filteredItems = filterCategory === '全部' 
-                ? db.items 
-                : db.items.filter(item => item.category === filterCategory);
-
-            // Generate Items HTML
-            const itemsHtml = filteredItems.length > 0 ? filteredItems.map(item => {
-                const isOutOfStock = item.stock <= 0;
-                const btnClass = isOutOfStock 
-                    ? 'bg-gray-300 cursor-not-allowed' 
-                    : 'bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg active:scale-95';
-                const btnText = isOutOfStock ? '已換罄' : '立即兌換';
-                
-                // Icon mapping based on fake image tag
-                let iconClass = 'fa-box';
-                if(item.image === 'rice' || item.image === 'cookie') iconClass = 'fa-utensils';
-                if(item.image === 'guitar') iconClass = 'fa-guitar';
-                if(item.image === 'book') iconClass = 'fa-book';
-                if(item.image === 'coupon') iconClass = 'fa-ticket-alt';
-
-                return `
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col fade-in">
-                    <div class="h-32 ${item.color} flex items-center justify-center relative">
-                        <i class="fas ${iconClass} text-4xl text-gray-400 opacity-50"></i>
-                        <span class="absolute top-2 right-2 bg-white/90 px-2 py-0.5 rounded text-xs font-bold text-gray-600 shadow-sm">
-                            庫存: ${item.stock}
-                        </span>
-                    </div>
-                    <div class="p-4 flex-1 flex flex-col">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="text-xs text-blue-500 font-medium bg-blue-50 px-2 py-0.5 rounded">${item.category}</span>
-                        </div>
-                        <h3 class="font-bold text-gray-800 text-lg leading-tight mb-1">${item.title}</h3>
-                        <div class="mt-auto pt-3 flex items-center justify-between">
-                            <div class="flex items-center text-orange-500 font-bold text-xl">
-                                <i class="fas fa-clock text-sm mr-1"></i>${item.cost}
-                            </div>
-                            <button onclick="redeemItem(${item.id})" ${isOutOfStock ? 'disabled' : ''} 
-                                class="px-4 py-2 rounded-lg text-white text-sm font-medium transition-all ${btnClass}">
-                                ${btnText}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                `;
-            }).join('') : `
-                <div class="col-span-full text-center py-10 text-gray-400">
-                    <i class="fas fa-search text-4xl mb-3"></i>
-                    <p>此分類暫無物資</p>
-                </div>
-            `;
-
-            main.innerHTML = `
-                <div class="p-4 space-y-4">
-                    <!-- Banner -->
-                    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-5 text-white shadow-lg mb-4">
-                        <h2 class="font-bold text-xl mb-1">分享愛，多一點</h2>
-                        <p class="text-blue-100 text-sm mb-3">使用時分兌換弟兄姊妹捐贈的物資。</p>
-                        <div class="flex gap-3">
-                            <div class="bg-white/20 px-3 py-1 rounded-lg backdrop-blur-sm">
-                                <span class="text-xs block text-blue-100">可兌換項目</span>
-                                <span class="font-bold text-lg">${db.items.filter(i => i.stock > 0).length}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Categories -->
-                    <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                        ${categoriesHtml}
-                    </div>
-
-                    <!-- Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
-                        ${itemsHtml}
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderProfile() {
-            const main = document.getElementById('main-content');
-            
-            // Sort history desc
-            const sortedHistory = [...db.user.history].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            const historyHtml = sortedHistory.length > 0 ? sortedHistory.map(h => `
-                <div class="flex items-center justify-between p-3 border-b border-gray-100 last:border-0">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center ${h.type === 'earn' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}">
-                            <i class="fas ${h.type === 'earn' ? 'fa-hand-holding-heart' : 'fa-shopping-basket'}"></i>
-                        </div>
-                        <div>
-                            <p class="font-bold text-gray-800 text-sm">${h.title}</p>
-                            <p class="text-xs text-gray-400">${h.date}</p>
-                        </div>
-                    </div>
-                    <span class="font-bold ${h.type === 'earn' ? 'text-green-600' : 'text-orange-600'}">
-                        ${h.type === 'earn' ? '+' : '-'}${h.amount}
-                    </span>
-                </div>
-            `).join('') : '<p class="text-center text-gray-400 py-4 text-sm">暫無紀錄</p>';
-
-            main.innerHTML = `
-                <div class="p-4 space-y-4 fade-in">
-                    <!-- Profile Card -->
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
-                        <div class="w-20 h-20 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center text-3xl text-gray-400">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <h2 class="text-xl font-bold text-gray-800">${db.user.name}</h2>
-                        <p class="text-gray-500 text-sm mb-4">會員編號: ${db.user.id}</p>
-                        
-                        <div class="bg-blue-50 rounded-xl p-4 inline-block w-full">
-                            <p class="text-sm text-blue-600 mb-1">現有時分</p>
-                            <div class="text-4xl font-extrabold text-blue-800 flex items-center justify-center gap-2">
-                                <i class="fas fa-clock text-2xl"></i> ${db.user.balance}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- History -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                            <h3 class="font-bold text-gray-700">時分紀錄</h3>
-                            <button onclick="clearHistory()" class="text-xs text-gray-400 hover:text-red-500">清除紀錄</button>
-                        </div>
-                        <div>
-                            ${historyHtml}
-                        </div>
-                    </div>
-                    
-                    <button onclick="resetSystem()" class="w-full py-3 text-sm text-gray-400 hover:text-red-500 mt-4">
-                        重置所有系統數據 (測試用)
-                    </button>
-                </div>
-            `;
-        }
-
-        function renderAdmin() {
-            const main = document.getElementById('main-content');
-            
-            main.innerHTML = `
-                <div class="p-4 space-y-6 fade-in">
-                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded shadow-sm">
-                        <div class="flex items-start">
-                            <i class="fas fa-info-circle text-yellow-500 mt-1 mr-3"></i>
-                            <div>
-                                <h3 class="font-bold text-yellow-800">同工操作模式</h3>
-                                <p class="text-sm text-yellow-700">在此發放時分給參與服事的弟兄姊妹，或上架新收到的捐贈物資。</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Give Points -->
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                            <i class="fas fa-hand-holding-heart text-green-500"></i> 發放時分 (服事獎勵)
-                        </h3>
-                        <div class="space-y-3">
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">對象</label>
-                                <select class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-                                    <option value="${db.user.id}">${db.user.name} (${db.user.id})</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">事由</label>
-                                <input type="text" id="service-title" placeholder="例如：敬拜隊服事" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">時分數量</label>
-                                <input type="number" id="service-points" value="1" min="1" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-                            </div>
-                            <button onclick="adminGivePoints()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium shadow transition-colors">
-                                確認發放
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Add Item -->
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                            <i class="fas fa-plus-circle text-blue-500"></i> 新增物資
-                        </h3>
-                        <div class="space-y-3">
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-500 mb-1">物資名稱</label>
-                                    <input type="text" id="item-title" placeholder="名稱" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-500 mb-1">分類</label>
-                                    <select id="item-category" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-                                        ${db.categories.map(c => c !== '全部' ? `<option value="${c}">${c}</option>` : '').join('')}
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-500 mb-1">兌換所需時分</label>
-                                    <input type="number" id="item-cost" value="1" min="1" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-500 mb-1">數量</label>
-                                    <input type="number" id="item-stock" value="1" min="1" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-                                </div>
-                            </div>
-                            <button onclick="adminAddItem()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium shadow transition-colors">
-                                上架物資
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // --- Logic Functions ---
-
-        function router(target) {
-            // Update Tab Styles
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                const icon = btn.querySelector('i');
-                const text = btn.querySelector('span');
-                
-                if (btn.dataset.target === target) {
-                    btn.classList.add('text-blue-600');
-                    btn.classList.remove('text-gray-400');
-                    // Simple animation for active tab
-                    icon.classList.add('scale-110');
-                } else {
-                    btn.classList.remove('text-blue-600');
-                    btn.classList.add('text-gray-400');
-                    icon.classList.remove('scale-110');
+            // Update tab styles
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('onclick').includes(tabId)) {
+                    btn.classList.add('active');
                 }
             });
-
-            // Render Content
-            if (target === 'market') renderMarket();
-            if (target === 'profile') renderProfile();
-            if (target === 'admin') renderAdmin();
         }
-
-        function redeemItem(itemId) {
-            const item = db.items.find(i => i.id === itemId);
-            if (!item) return;
-
-            if (db.user.balance < item.cost) {
-                showToast(`餘額不足！還差 ${item.cost - db.user.balance} 時分`, 'error');
-                return;
-            }
-            if (item.stock <= 0) {
-                showToast('手快有手慢無，已經換光了！', 'error');
-                return;
-            }
-
-            // Execute transaction
-            db.user.balance -= item.cost;
-            item.stock -= 1;
-            
-            // Add Record
-            db.user.history.push({
-                id: Date.now(),
-                type: 'spend',
-                title: `兌換: ${item.title}`,
-                amount: item.cost,
-                date: new Date().toISOString().split('T')[0]
-            });
-
-            saveDB();
-            showToast(`成功兌換：${item.title}`);
-            renderMarket(); // Re-render to show updated stock
-        }
-
-        function adminGivePoints() {
-            const title = document.getElementById('service-title').value.trim();
-            const points = parseInt(document.getElementById('service-points').value);
-
-            if (!title || points <= 0) {
-                showToast('請輸入正確的事由和數量', 'error');
-                return;
-            }
-
-            db.user.balance += points;
-            db.user.history.push({
-                id: Date.now(),
-                type: 'earn',
-                title: title,
-                amount: points,
-                date: new Date().toISOString().split('T')[0]
-            });
-
-            saveDB();
-            showToast(`已發放 ${points} 時分`);
-            // Clear inputs
-            document.getElementById('service-title').value = '';
-            document.getElementById('service-points').value = '1';
-        }
-
-        function adminAddItem() {
-            const title = document.getElementById('item-title').value.trim();
-            const category = document.getElementById('item-category').value;
-            const cost = parseInt(document.getElementById('item-cost').value);
-            const stock = parseInt(document.getElementById('item-stock').value);
-
-            if (!title || cost <= 0 || stock <= 0) {
-                showToast('資料不完整', 'error');
-                return;
-            }
-
-            const newItem = {
-                id: Date.now(),
-                title: title,
-                category: category,
-                cost: cost,
-                stock: stock,
-                image: 'box', // Default generic image logic
-                color: 'bg-indigo-100'
-            };
-
-            db.items.unshift(newItem); // Add to top
-            saveDB();
-            showToast('物資上架成功！');
-            
-            // Clear inputs
-            document.getElementById('item-title').value = '';
-            document.getElementById('item-stock').value = '1';
-        }
-
-        function clearHistory() {
-            if(confirm('確定要清除所有交易紀錄嗎？')) {
-                db.user.history = [];
-                saveDB();
-                renderProfile();
-                showToast('紀錄已清除');
-            }
-        }
-
-        function resetSystem() {
-            if(confirm('確定要重置系統嗎？所有自訂數據將消失。')) {
-                localStorage.removeItem(DB_KEY);
-                location.reload();
-            }
-        }
-
-        // Initialize
-        updateHeader();
-        router('market');
-
     </script>
 </body>
 </html>
