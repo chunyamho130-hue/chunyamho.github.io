@@ -1,11 +1,460 @@
-<!DOCTYPE html>
-<html lang="zh-HK">
-<head>
-<meta charset="UTF-8">
-<title>我的 GitHub Pages 網站</title>
-</head>
-<body>
-<h1>你好！GitHub Pages 已經成功運作 🎉</h1>
-<p>呢度係我嘅第一個 GitHub Pages 頁面。</p>
-</body>
-</html>
+import React, { useState, useEffect } from 'react';
+import { 
+  Heart, 
+  Clock, 
+  ShoppingBag, 
+  PlusCircle, 
+  User, 
+  History, 
+  Gift,
+  CheckCircle,
+  AlertCircle,
+  Menu,
+  X
+} from 'lucide-react';
+
+// 模擬數據：初始物資
+const INITIAL_ITEMS = [
+  { id: 1, name: "有機白米 (2kg)", cost: 2, stock: 5, category: "食品", donor: "陳媽媽", image: "🍚" },
+  { id: 2, name: "全新保溫杯", cost: 3, stock: 2, category: "日用品", donor: "李弟兄", image: "🥤" },
+  { id: 3, name: "兒童繪本 (套裝)", cost: 4, stock: 1, category: "書籍", donor: "王老師", image: "📚" },
+  { id: 4, name: "手工餅乾", cost: 1, stock: 10, category: "食品", donor: "青年團契", image: "🍪" },
+  { id: 5, name: "二手九成新電風扇", cost: 5, stock: 1, category: "家電", donor: "林長老", image: "🌬️" },
+  { id: 6, name: "洗碗精補充包", cost: 1, stock: 8, category: "日用品", donor: "愛心小組", image: "🧼" },
+];
+
+// 模擬數據：使用者 (包含餘額)
+const INITIAL_USER = {
+  id: "u1",
+  name: "張小美 (會友)",
+  balance: 5, // 擁有 5 小時的時分券
+  history: [
+    { id: 1, type: 'earn', amount: 2, desc: "主日學助教服事", date: "2023-10-20" },
+    { id: 2, type: 'earn', amount: 3, desc: "協助教會大掃除", date: "2023-10-25" },
+  ]
+};
+
+// 模擬數據：服事機會 (賺取點數)
+const SERVICE_OPPS = [
+  { id: 1, title: "愛宴洗碗", reward: 2, desc: "協助清洗週日愛宴的碗盤" },
+  { id: 2, title: "整理圖書角", reward: 1, desc: "將圖書歸位並擦拭書架" },
+  { id: 3, title: "探訪獨居長者", reward: 3, desc: "陪伴長者聊天、禱告 (需2小時)" },
+];
+
+export default function ChurchTimeBank() {
+  const [activeTab, setActiveTab] = useState('market'); // market, earn, wallet, admin
+  const [items, setItems] = useState(INITIAL_ITEMS);
+  const [user, setUser] = useState(INITIAL_USER);
+  const [notification, setNotification] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // 用於新增物品的表單狀態
+  const [newItem, setNewItem] = useState({ name: '', cost: 1, stock: 1, category: '食品', donor: '' });
+
+  // 顯示通知
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  // 購買/兌換物品
+  const handlePurchase = (item) => {
+    if (user.balance < item.cost) {
+      showNotification("時分券餘額不足！請多參與服事。", "error");
+      return;
+    }
+    if (item.stock <= 0) {
+      showNotification("該物品已兌換完畢。", "error");
+      return;
+    }
+
+    // 扣除庫存
+    const updatedItems = items.map(i => 
+      i.id === item.id ? { ...i, stock: i.stock - 1 } : i
+    );
+    setItems(updatedItems);
+
+    // 扣除餘額並新增紀錄
+    const newHistory = {
+      id: Date.now(),
+      type: 'spend',
+      amount: item.cost,
+      desc: `兌換：${item.name}`,
+      date: new Date().toLocaleDateString()
+    };
+
+    setUser({
+      ...user,
+      balance: user.balance - item.cost,
+      history: [newHistory, ...user.history]
+    });
+
+    showNotification(`成功兌換 ${item.name}！扣除 ${item.cost} 時分券。`);
+  };
+
+  // 賺取點數 (模擬完成服事)
+  const handleEarn = (service) => {
+    const newHistory = {
+      id: Date.now(),
+      type: 'earn',
+      amount: service.reward,
+      desc: `完成服事：${service.title}`,
+      date: new Date().toLocaleDateString()
+    };
+
+    setUser({
+      ...user,
+      balance: user.balance + service.reward,
+      history: [newHistory, ...user.history]
+    });
+
+    showNotification(`感謝您的服事！獲得 ${service.reward} 時分券。`);
+  };
+
+  // 新增物品 (管理員功能)
+  const handleAddItem = (e) => {
+    e.preventDefault();
+    const itemToAdd = {
+      id: Date.now(),
+      ...newItem,
+      image: "🎁" // 預設圖示
+    };
+    setItems([itemToAdd, ...items]);
+    setNewItem({ name: '', cost: 1, stock: 1, category: '食品', donor: '' });
+    showNotification("新物資上架成功！");
+  };
+
+  // 導航組件
+  const NavButton = ({ tab, icon: Icon, label }) => (
+    <button
+      onClick={() => {
+        setActiveTab(tab);
+        setMobileMenuOpen(false);
+      }}
+      className={`flex items-center space-x-2 px-4 py-3 rounded-lg transition-colors w-full md:w-auto ${
+        activeTab === tab 
+          ? 'bg-amber-100 text-amber-800 font-bold' 
+          : 'text-gray-600 hover:bg-gray-100'
+      }`}
+    >
+      <Icon size={20} />
+      <span>{label}</span>
+    </button>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
+      {/* 頂部導航欄 */}
+      <header className="bg-white shadow-sm sticky top-0 z-10 border-b border-amber-100">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-2">
+              <div className="bg-amber-500 text-white p-2 rounded-lg">
+                <Heart size={24} />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-800">教會愛心時分券</h1>
+                <p className="text-xs text-gray-500">互助．分享．愛</p>
+              </div>
+            </div>
+
+            {/* 桌面版導航 */}
+            <nav className="hidden md:flex space-x-1">
+              <NavButton tab="market" icon={ShoppingBag} label="愛心市集" />
+              <NavButton tab="earn" icon={Clock} label="服事機會" />
+              <NavButton tab="wallet" icon={User} label="我的存摺" />
+              <NavButton tab="admin" icon={PlusCircle} label="物資管理" />
+            </nav>
+
+            {/* 手機版餘額顯示 & 選單按鈕 */}
+            <div className="flex items-center space-x-3 md:hidden">
+               <div className="bg-amber-50 px-3 py-1 rounded-full border border-amber-200 text-amber-800 text-sm font-bold flex items-center">
+                  <span className="mr-1">🎫</span> {user.balance}
+               </div>
+               <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-gray-600">
+                 {mobileMenuOpen ? <X /> : <Menu />}
+               </button>
+            </div>
+
+            {/* 桌面版餘額顯示 */}
+            <div className="hidden md:flex items-center space-x-2 bg-amber-50 px-4 py-2 rounded-full border border-amber-200">
+              <span className="text-sm text-amber-800 font-bold">目前持有:</span>
+              <span className="text-xl text-amber-600 font-black">{user.balance}</span>
+              <span className="text-xs text-amber-800">時分券</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* 手機版選單 */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t p-2 space-y-1">
+            <NavButton tab="market" icon={ShoppingBag} label="愛心市集" />
+            <NavButton tab="earn" icon={Clock} label="服事機會" />
+            <NavButton tab="wallet" icon={User} label="我的存摺" />
+            <NavButton tab="admin" icon={PlusCircle} label="物資管理" />
+          </div>
+        )}
+      </header>
+
+      {/* 通知提示 */}
+      {notification && (
+        <div className={`fixed top-20 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-500 flex items-center space-x-2 ${
+          notification.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-600 text-white'
+        }`}>
+          {notification.type === 'error' ? <AlertCircle size={20}/> : <CheckCircle size={20}/>}
+          <span>{notification.message}</span>
+        </div>
+      )}
+
+      <main className="max-w-4xl mx-auto px-4 py-6">
+        
+        {/* 1. 愛心市集頁面 */}
+        {activeTab === 'market' && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-amber-500 to-orange-400 rounded-xl p-6 text-white shadow-lg">
+              <h2 className="text-2xl font-bold mb-2">🎁 愛心物資交換</h2>
+              <p className="opacity-90">用您的服事時數，兌換弟兄姊妹捐贈的愛心。讓物資流動，讓愛加倍。</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {items.map(item => (
+                <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+                  <div className="h-32 bg-gray-100 flex items-center justify-center text-6xl">
+                    {item.image}
+                  </div>
+                  <div className="p-4 flex-1 flex flex-col">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-xs font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                        {item.category}
+                      </span>
+                      <span className={`text-xs px-2 py-1 rounded ${item.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}`}>
+                        庫存: {item.stock}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-lg mb-1 text-gray-800">{item.name}</h3>
+                    <p className="text-sm text-gray-500 mb-4">捐贈者: {item.donor}</p>
+                    
+                    <div className="mt-auto flex justify-between items-center">
+                      <div className="text-amber-600 font-bold flex items-center">
+                        <span className="text-2xl mr-1">{item.cost}</span>
+                        <span className="text-xs">時分券</span>
+                      </div>
+                      <button
+                        onClick={() => handlePurchase(item)}
+                        disabled={item.stock === 0 || user.balance < item.cost}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                          item.stock === 0 
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : user.balance < item.cost
+                              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                              : 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm'
+                        }`}
+                      >
+                        {item.stock === 0 ? '已兌換' : '立即兌換'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 2. 賺取時分券 (服事列表) */}
+        {activeTab === 'earn' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <h2 className="text-2xl font-bold text-gray-800 flex items-center mb-4">
+                <Clock className="text-amber-500 mr-2" />
+                服事機會看板
+              </h2>
+              <p className="text-gray-600 mb-6">
+                「各人要照所得的恩賜彼此服事，作神百般恩賜的好管家。」(彼前 4:10)
+                <br/>完成以下服事並經同工確認，即可獲得對應時分券。
+              </p>
+
+              <div className="space-y-4">
+                {SERVICE_OPPS.map(service => (
+                  <div key={service.id} className="border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-amber-50 transition-colors">
+                    <div className="mb-3 sm:mb-0">
+                      <h3 className="font-bold text-lg text-gray-800">{service.title}</h3>
+                      <p className="text-gray-600 text-sm">{service.desc}</p>
+                    </div>
+                    <div className="flex items-center space-x-4 w-full sm:w-auto justify-between sm:justify-end">
+                      <span className="font-bold text-amber-600">+{service.reward} 時分券</span>
+                      <button 
+                        onClick={() => handleEarn(service)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors"
+                      >
+                        登記服事
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-blue-800">
+              💡 提示：在真實運作中，服事登記需要經過小組長或行政同工的審核才會發放點數。此處為演示模式，點擊即時發放。
+            </div>
+          </div>
+        )}
+
+        {/* 3. 我的存摺 (交易紀錄) */}
+        {activeTab === 'wallet' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="bg-amber-500 p-8 text-white text-center">
+                <div className="text-sm opacity-90 mb-1">目前餘額</div>
+                <div className="text-5xl font-bold mb-2">{user.balance}</div>
+                <div className="inline-block bg-white/20 px-3 py-1 rounded-full text-sm">
+                  {user.name} 的時分券存摺
+                </div>
+              </div>
+
+              <div className="p-6">
+                <h3 className="font-bold text-gray-800 mb-4 flex items-center">
+                  <History className="mr-2 text-gray-500" size={20}/>
+                  交易與服事紀錄
+                </h3>
+                <div className="space-y-4">
+                  {user.history.map(record => (
+                    <div key={record.id} className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0">
+                      <div className="flex items-center space-x-3">
+                        <div className={`p-2 rounded-full ${record.type === 'earn' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
+                          {record.type === 'earn' ? <PlusCircle size={18} /> : <ShoppingBag size={18} />}
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-800">{record.desc}</div>
+                          <div className="text-xs text-gray-500">{record.date}</div>
+                        </div>
+                      </div>
+                      <div className={`font-bold ${record.type === 'earn' ? 'text-green-600' : 'text-orange-600'}`}>
+                        {record.type === 'earn' ? '+' : '-'}{record.amount}
+                      </div>
+                    </div>
+                  ))}
+                  {user.history.length === 0 && (
+                    <div className="text-center text-gray-400 py-4">尚無紀錄</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 4. 物資管理 (後台) */}
+        {activeTab === 'admin' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <Gift className="mr-2 text-amber-500" />
+                新增捐贈物資
+              </h2>
+              <form onSubmit={handleAddItem} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">物品名稱</label>
+                    <input
+                      required
+                      type="text"
+                      value={newItem.name}
+                      onChange={e => setNewItem({...newItem, name: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                      placeholder="例如：有機白米"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">類別</label>
+                    <select
+                      value={newItem.category}
+                      onChange={e => setNewItem({...newItem, category: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                    >
+                      <option value="食品">食品</option>
+                      <option value="日用品">日用品</option>
+                      <option value="書籍">書籍</option>
+                      <option value="家電">家電</option>
+                      <option value="衣物">衣物</option>
+                      <option value="其他">其他</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">兌換所需時分券</label>
+                    <input
+                      required
+                      type="number"
+                      min="1"
+                      value={newItem.cost}
+                      onChange={e => setNewItem({...newItem, cost: parseInt(e.target.value)})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">庫存數量</label>
+                    <input
+                      required
+                      type="number"
+                      min="1"
+                      value={newItem.stock}
+                      onChange={e => setNewItem({...newItem, stock: parseInt(e.target.value)})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">捐贈者 (選填)</label>
+                    <input
+                      type="text"
+                      value={newItem.donor}
+                      onChange={e => setNewItem({...newItem, donor: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                      placeholder="例如：陳媽媽、匿名"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-gray-800 text-white py-3 rounded-lg font-bold hover:bg-gray-900 transition-colors flex justify-center items-center"
+                >
+                  <PlusCircle size={20} className="mr-2" />
+                  上架物資
+                </button>
+              </form>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+               <h3 className="font-bold text-gray-800 mb-4">目前庫存列表</h3>
+               <div className="overflow-x-auto">
+                 <table className="w-full text-sm text-left">
+                   <thead className="text-gray-500 bg-gray-50">
+                     <tr>
+                       <th className="px-4 py-2">名稱</th>
+                       <th className="px-4 py-2">類別</th>
+                       <th className="px-4 py-2">庫存</th>
+                       <th className="px-4 py-2">價格</th>
+                     </tr>
+                   </thead>
+                   <tbody>
+                     {items.map(item => (
+                       <tr key={item.id} className="border-b">
+                         <td className="px-4 py-3 font-medium">{item.name}</td>
+                         <td className="px-4 py-3 text-gray-500">{item.category}</td>
+                         <td className="px-4 py-3">
+                            <span className={`px-2 py-1 rounded-full text-xs ${item.stock < 3 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                              {item.stock}
+                            </span>
+                         </td>
+                         <td className="px-4 py-3">{item.cost} 券</td>
+                       </tr>
+                     ))}
+                   </tbody>
+                 </table>
+               </div>
+            </div>
+          </div>
+        )}
+
+      </main>
+    </div>
+  );
+}
