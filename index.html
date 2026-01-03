@@ -1,460 +1,512 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Heart, 
-  Clock, 
-  ShoppingBag, 
-  PlusCircle, 
-  User, 
-  History, 
-  Gift,
-  CheckCircle,
-  AlertCircle,
-  Menu,
-  X
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教會愛心時分券系統</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Hide scrollbar for category list */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 h-screen flex flex-col">
 
-// 模擬數據：初始物資
-const INITIAL_ITEMS = [
-  { id: 1, name: "有機白米 (2kg)", cost: 2, stock: 5, category: "食品", donor: "陳媽媽", image: "🍚" },
-  { id: 2, name: "全新保溫杯", cost: 3, stock: 2, category: "日用品", donor: "李弟兄", image: "🥤" },
-  { id: 3, name: "兒童繪本 (套裝)", cost: 4, stock: 1, category: "書籍", donor: "王老師", image: "📚" },
-  { id: 4, name: "手工餅乾", cost: 1, stock: 10, category: "食品", donor: "青年團契", image: "🍪" },
-  { id: 5, name: "二手九成新電風扇", cost: 5, stock: 1, category: "家電", donor: "林長老", image: "🌬️" },
-  { id: 6, name: "洗碗精補充包", cost: 1, stock: 8, category: "日用品", donor: "愛心小組", image: "🧼" },
-];
-
-// 模擬數據：使用者 (包含餘額)
-const INITIAL_USER = {
-  id: "u1",
-  name: "張小美 (會友)",
-  balance: 5, // 擁有 5 小時的時分券
-  history: [
-    { id: 1, type: 'earn', amount: 2, desc: "主日學助教服事", date: "2023-10-20" },
-    { id: 2, type: 'earn', amount: 3, desc: "協助教會大掃除", date: "2023-10-25" },
-  ]
-};
-
-// 模擬數據：服事機會 (賺取點數)
-const SERVICE_OPPS = [
-  { id: 1, title: "愛宴洗碗", reward: 2, desc: "協助清洗週日愛宴的碗盤" },
-  { id: 2, title: "整理圖書角", reward: 1, desc: "將圖書歸位並擦拭書架" },
-  { id: 3, title: "探訪獨居長者", reward: 3, desc: "陪伴長者聊天、禱告 (需2小時)" },
-];
-
-export default function ChurchTimeBank() {
-  const [activeTab, setActiveTab] = useState('market'); // market, earn, wallet, admin
-  const [items, setItems] = useState(INITIAL_ITEMS);
-  const [user, setUser] = useState(INITIAL_USER);
-  const [notification, setNotification] = useState(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // 用於新增物品的表單狀態
-  const [newItem, setNewItem] = useState({ name: '', cost: 1, stock: 1, category: '食品', donor: '' });
-
-  // 顯示通知
-  const showNotification = (message, type = 'success') => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
-  };
-
-  // 購買/兌換物品
-  const handlePurchase = (item) => {
-    if (user.balance < item.cost) {
-      showNotification("時分券餘額不足！請多參與服事。", "error");
-      return;
-    }
-    if (item.stock <= 0) {
-      showNotification("該物品已兌換完畢。", "error");
-      return;
-    }
-
-    // 扣除庫存
-    const updatedItems = items.map(i => 
-      i.id === item.id ? { ...i, stock: i.stock - 1 } : i
-    );
-    setItems(updatedItems);
-
-    // 扣除餘額並新增紀錄
-    const newHistory = {
-      id: Date.now(),
-      type: 'spend',
-      amount: item.cost,
-      desc: `兌換：${item.name}`,
-      date: new Date().toLocaleDateString()
-    };
-
-    setUser({
-      ...user,
-      balance: user.balance - item.cost,
-      history: [newHistory, ...user.history]
-    });
-
-    showNotification(`成功兌換 ${item.name}！扣除 ${item.cost} 時分券。`);
-  };
-
-  // 賺取點數 (模擬完成服事)
-  const handleEarn = (service) => {
-    const newHistory = {
-      id: Date.now(),
-      type: 'earn',
-      amount: service.reward,
-      desc: `完成服事：${service.title}`,
-      date: new Date().toLocaleDateString()
-    };
-
-    setUser({
-      ...user,
-      balance: user.balance + service.reward,
-      history: [newHistory, ...user.history]
-    });
-
-    showNotification(`感謝您的服事！獲得 ${service.reward} 時分券。`);
-  };
-
-  // 新增物品 (管理員功能)
-  const handleAddItem = (e) => {
-    e.preventDefault();
-    const itemToAdd = {
-      id: Date.now(),
-      ...newItem,
-      image: "🎁" // 預設圖示
-    };
-    setItems([itemToAdd, ...items]);
-    setNewItem({ name: '', cost: 1, stock: 1, category: '食品', donor: '' });
-    showNotification("新物資上架成功！");
-  };
-
-  // 導航組件
-  const NavButton = ({ tab, icon: Icon, label }) => (
-    <button
-      onClick={() => {
-        setActiveTab(tab);
-        setMobileMenuOpen(false);
-      }}
-      className={`flex items-center space-x-2 px-4 py-3 rounded-lg transition-colors w-full md:w-auto ${
-        activeTab === tab 
-          ? 'bg-amber-100 text-amber-800 font-bold' 
-          : 'text-gray-600 hover:bg-gray-100'
-      }`}
-    >
-      <Icon size={20} />
-      <span>{label}</span>
-    </button>
-  );
-
-  return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
-      {/* 頂部導航欄 */}
-      <header className="bg-white shadow-sm sticky top-0 z-10 border-b border-amber-100">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <div className="bg-amber-500 text-white p-2 rounded-lg">
-                <Heart size={24} />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-800">教會愛心時分券</h1>
-                <p className="text-xs text-gray-500">互助．分享．愛</p>
-              </div>
-            </div>
-
-            {/* 桌面版導航 */}
-            <nav className="hidden md:flex space-x-1">
-              <NavButton tab="market" icon={ShoppingBag} label="愛心市集" />
-              <NavButton tab="earn" icon={Clock} label="服事機會" />
-              <NavButton tab="wallet" icon={User} label="我的存摺" />
-              <NavButton tab="admin" icon={PlusCircle} label="物資管理" />
-            </nav>
-
-            {/* 手機版餘額顯示 & 選單按鈕 */}
-            <div className="flex items-center space-x-3 md:hidden">
-               <div className="bg-amber-50 px-3 py-1 rounded-full border border-amber-200 text-amber-800 text-sm font-bold flex items-center">
-                  <span className="mr-1">🎫</span> {user.balance}
-               </div>
-               <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-gray-600">
-                 {mobileMenuOpen ? <X /> : <Menu />}
-               </button>
-            </div>
-
-            {/* 桌面版餘額顯示 */}
-            <div className="hidden md:flex items-center space-x-2 bg-amber-50 px-4 py-2 rounded-full border border-amber-200">
-              <span className="text-sm text-amber-800 font-bold">目前持有:</span>
-              <span className="text-xl text-amber-600 font-black">{user.balance}</span>
-              <span className="text-xs text-amber-800">時分券</span>
-            </div>
-          </div>
+    <!-- Notification Toast -->
+    <div id="toast-container" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 pointer-events-none opacity-0 translate-y-[-20px]">
+        <div id="toast-message" class="bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3">
+            <i class="fas fa-check-circle text-green-400"></i>
+            <span>操作成功</span>
         </div>
-        
-        {/* 手機版選單 */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t p-2 space-y-1">
-            <NavButton tab="market" icon={ShoppingBag} label="愛心市集" />
-            <NavButton tab="earn" icon={Clock} label="服事機會" />
-            <NavButton tab="wallet" icon={User} label="我的存摺" />
-            <NavButton tab="admin" icon={PlusCircle} label="物資管理" />
-          </div>
-        )}
-      </header>
+    </div>
 
-      {/* 通知提示 */}
-      {notification && (
-        <div className={`fixed top-20 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-500 flex items-center space-x-2 ${
-          notification.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-600 text-white'
-        }`}>
-          {notification.type === 'error' ? <AlertCircle size={20}/> : <CheckCircle size={20}/>}
-          <span>{notification.message}</span>
-        </div>
-      )}
-
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        
-        {/* 1. 愛心市集頁面 */}
-        {activeTab === 'market' && (
-          <div className="space-y-6">
-            <div className="bg-gradient-to-r from-amber-500 to-orange-400 rounded-xl p-6 text-white shadow-lg">
-              <h2 className="text-2xl font-bold mb-2">🎁 愛心物資交換</h2>
-              <p className="opacity-90">用您的服事時數，兌換弟兄姊妹捐贈的愛心。讓物資流動，讓愛加倍。</p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {items.map(item => (
-                <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
-                  <div className="h-32 bg-gray-100 flex items-center justify-center text-6xl">
-                    {item.image}
-                  </div>
-                  <div className="p-4 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-xs font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                        {item.category}
-                      </span>
-                      <span className={`text-xs px-2 py-1 rounded ${item.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}`}>
-                        庫存: {item.stock}
-                      </span>
-                    </div>
-                    <h3 className="font-bold text-lg mb-1 text-gray-800">{item.name}</h3>
-                    <p className="text-sm text-gray-500 mb-4">捐贈者: {item.donor}</p>
-                    
-                    <div className="mt-auto flex justify-between items-center">
-                      <div className="text-amber-600 font-bold flex items-center">
-                        <span className="text-2xl mr-1">{item.cost}</span>
-                        <span className="text-xs">時分券</span>
-                      </div>
-                      <button
-                        onClick={() => handlePurchase(item)}
-                        disabled={item.stock === 0 || user.balance < item.cost}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                          item.stock === 0 
-                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                            : user.balance < item.cost
-                              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                              : 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm'
-                        }`}
-                      >
-                        {item.stock === 0 ? '已兌換' : '立即兌換'}
-                      </button>
-                    </div>
-                  </div>
+    <!-- Mobile Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="max-w-3xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
+                    <i class="fas fa-church"></i>
                 </div>
-              ))}
+                <h1 class="text-lg font-bold text-gray-800">教會時分市集</h1>
             </div>
-          </div>
-        )}
-
-        {/* 2. 賺取時分券 (服事列表) */}
-        {activeTab === 'earn' && (
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-800 flex items-center mb-4">
-                <Clock className="text-amber-500 mr-2" />
-                服事機會看板
-              </h2>
-              <p className="text-gray-600 mb-6">
-                「各人要照所得的恩賜彼此服事，作神百般恩賜的好管家。」(彼前 4:10)
-                <br/>完成以下服事並經同工確認，即可獲得對應時分券。
-              </p>
-
-              <div className="space-y-4">
-                {SERVICE_OPPS.map(service => (
-                  <div key={service.id} className="border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-amber-50 transition-colors">
-                    <div className="mb-3 sm:mb-0">
-                      <h3 className="font-bold text-lg text-gray-800">{service.title}</h3>
-                      <p className="text-gray-600 text-sm">{service.desc}</p>
-                    </div>
-                    <div className="flex items-center space-x-4 w-full sm:w-auto justify-between sm:justify-end">
-                      <span className="font-bold text-amber-600">+{service.reward} 時分券</span>
-                      <button 
-                        onClick={() => handleEarn(service)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors"
-                      >
-                        登記服事
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div class="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+                <i class="fas fa-clock text-blue-600 text-sm"></i>
+                <span id="header-balance" class="font-bold text-blue-800">0</span>
+                <span class="text-xs text-blue-600">時分</span>
             </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main id="main-content" class="flex-1 overflow-y-auto pb-24 max-w-3xl mx-auto w-full">
+        <!-- Dynamic Content Injected Here -->
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20">
+        <div class="max-w-3xl mx-auto flex justify-around items-center h-16">
+            <button onclick="router('market')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-blue-600 hover:bg-gray-50 transition-colors" data-target="market">
+                <i class="fas fa-store mb-1 text-xl"></i>
+                <span class="text-xs font-medium">物資市集</span>
+            </button>
+            <button onclick="router('profile')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 hover:bg-gray-50 transition-colors" data-target="profile">
+                <i class="fas fa-user mb-1 text-xl"></i>
+                <span class="text-xs font-medium">我的帳戶</span>
+            </button>
+            <button onclick="router('admin')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 hover:bg-gray-50 transition-colors" data-target="admin">
+                <i class="fas fa-cog mb-1 text-xl"></i>
+                <span class="text-xs font-medium">同工後台</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Javascript Logic -->
+    <script>
+        // --- Data Management (Simulating Backend) ---
+        const DB_KEY = 'church_timebank_v1';
+        
+        const initialData = {
+            user: {
+                id: 'u001',
+                name: '陳弟兄',
+                balance: 15, // Initial points
+                history: [
+                    { id: 1, type: 'earn', title: '兒童主日學服事', amount: 5, date: '2023-10-25' },
+                    { id: 2, type: 'earn', title: '愛筵洗碗', amount: 10, date: '2023-10-20' }
+                ]
+            },
+            items: [
+                { id: 1, title: '有機白米 (5kg)', cost: 10, stock: 3, category: '食品', image: 'rice', color: 'bg-orange-100' },
+                { id: 2, title: '全新保溫瓶', cost: 8, stock: 5, category: '生活', image: 'bottle', color: 'bg-blue-100' },
+                { id: 3, title: '二手木結他', cost: 50, stock: 1, category: '樂器', image: 'guitar', color: 'bg-yellow-100' },
+                { id: 4, title: '屬靈書籍: 活出美好', cost: 5, stock: 10, category: '書籍', image: 'book', color: 'bg-green-100' },
+                { id: 5, title: '超市現金券 ($50)', cost: 25, stock: 0, category: '禮券', image: 'coupon', color: 'bg-red-100' },
+                { id: 6, title: '手工曲奇餅', cost: 3, stock: 15, category: '食品', image: 'cookie', color: 'bg-orange-50' }
+            ],
+            categories: ['全部', '食品', '生活', '書籍', '樂器', '禮券']
+        };
+
+        // Load data or initialize
+        let db = JSON.parse(localStorage.getItem(DB_KEY)) || initialData;
+
+        function saveDB() {
+            localStorage.setItem(DB_KEY, JSON.stringify(db));
+            updateHeader();
+        }
+
+        function updateHeader() {
+            document.getElementById('header-balance').textContent = db.user.balance;
+        }
+
+        // --- Toast Notification ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const msgBox = document.getElementById('toast-message');
             
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-blue-800">
-              💡 提示：在真實運作中，服事登記需要經過小組長或行政同工的審核才會發放點數。此處為演示模式，點擊即時發放。
-            </div>
-          </div>
-        )}
+            let icon = 'fa-check-circle';
+            let color = 'text-green-400';
+            
+            if (type === 'error') {
+                icon = 'fa-times-circle';
+                color = 'text-red-400';
+            }
 
-        {/* 3. 我的存摺 (交易紀錄) */}
-        {activeTab === 'wallet' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="bg-amber-500 p-8 text-white text-center">
-                <div className="text-sm opacity-90 mb-1">目前餘額</div>
-                <div className="text-5xl font-bold mb-2">{user.balance}</div>
-                <div className="inline-block bg-white/20 px-3 py-1 rounded-full text-sm">
-                  {user.name} 的時分券存摺
+            msgBox.innerHTML = `<i class="fas ${icon} ${color}"></i><span>${message}</span>`;
+            
+            container.classList.remove('opacity-0', 'translate-y-[-20px]');
+            container.classList.add('opacity-100', 'translate-y-0');
+            
+            setTimeout(() => {
+                container.classList.add('opacity-0', 'translate-y-[-20px]');
+                container.classList.remove('opacity-100', 'translate-y-0');
+            }, 2500);
+        }
+
+        // --- View Renderers ---
+
+        function renderMarket(filterCategory = '全部') {
+            const main = document.getElementById('main-content');
+            
+            // Generate Categories HTML
+            const categoriesHtml = db.categories.map(cat => 
+                `<button onclick="renderMarket('${cat}')" 
+                    class="px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors
+                    ${cat === filterCategory ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200'}">
+                    ${cat}
+                </button>`
+            ).join('');
+
+            // Filter Items
+            const filteredItems = filterCategory === '全部' 
+                ? db.items 
+                : db.items.filter(item => item.category === filterCategory);
+
+            // Generate Items HTML
+            const itemsHtml = filteredItems.length > 0 ? filteredItems.map(item => {
+                const isOutOfStock = item.stock <= 0;
+                const btnClass = isOutOfStock 
+                    ? 'bg-gray-300 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg active:scale-95';
+                const btnText = isOutOfStock ? '已換罄' : '立即兌換';
+                
+                // Icon mapping based on fake image tag
+                let iconClass = 'fa-box';
+                if(item.image === 'rice' || item.image === 'cookie') iconClass = 'fa-utensils';
+                if(item.image === 'guitar') iconClass = 'fa-guitar';
+                if(item.image === 'book') iconClass = 'fa-book';
+                if(item.image === 'coupon') iconClass = 'fa-ticket-alt';
+
+                return `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col fade-in">
+                    <div class="h-32 ${item.color} flex items-center justify-center relative">
+                        <i class="fas ${iconClass} text-4xl text-gray-400 opacity-50"></i>
+                        <span class="absolute top-2 right-2 bg-white/90 px-2 py-0.5 rounded text-xs font-bold text-gray-600 shadow-sm">
+                            庫存: ${item.stock}
+                        </span>
+                    </div>
+                    <div class="p-4 flex-1 flex flex-col">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs text-blue-500 font-medium bg-blue-50 px-2 py-0.5 rounded">${item.category}</span>
+                        </div>
+                        <h3 class="font-bold text-gray-800 text-lg leading-tight mb-1">${item.title}</h3>
+                        <div class="mt-auto pt-3 flex items-center justify-between">
+                            <div class="flex items-center text-orange-500 font-bold text-xl">
+                                <i class="fas fa-clock text-sm mr-1"></i>${item.cost}
+                            </div>
+                            <button onclick="redeemItem(${item.id})" ${isOutOfStock ? 'disabled' : ''} 
+                                class="px-4 py-2 rounded-lg text-white text-sm font-medium transition-all ${btnClass}">
+                                ${btnText}
+                            </button>
+                        </div>
+                    </div>
                 </div>
-              </div>
+                `;
+            }).join('') : `
+                <div class="col-span-full text-center py-10 text-gray-400">
+                    <i class="fas fa-search text-4xl mb-3"></i>
+                    <p>此分類暫無物資</p>
+                </div>
+            `;
 
-              <div className="p-6">
-                <h3 className="font-bold text-gray-800 mb-4 flex items-center">
-                  <History className="mr-2 text-gray-500" size={20}/>
-                  交易與服事紀錄
-                </h3>
-                <div className="space-y-4">
-                  {user.history.map(record => (
-                    <div key={record.id} className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0">
-                      <div className="flex items-center space-x-3">
-                        <div className={`p-2 rounded-full ${record.type === 'earn' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
-                          {record.type === 'earn' ? <PlusCircle size={18} /> : <ShoppingBag size={18} />}
+            main.innerHTML = `
+                <div class="p-4 space-y-4">
+                    <!-- Banner -->
+                    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-5 text-white shadow-lg mb-4">
+                        <h2 class="font-bold text-xl mb-1">分享愛，多一點</h2>
+                        <p class="text-blue-100 text-sm mb-3">使用時分兌換弟兄姊妹捐贈的物資。</p>
+                        <div class="flex gap-3">
+                            <div class="bg-white/20 px-3 py-1 rounded-lg backdrop-blur-sm">
+                                <span class="text-xs block text-blue-100">可兌換項目</span>
+                                <span class="font-bold text-lg">${db.items.filter(i => i.stock > 0).length}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categories -->
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                        ${categoriesHtml}
+                    </div>
+
+                    <!-- Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
+                        ${itemsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProfile() {
+            const main = document.getElementById('main-content');
+            
+            // Sort history desc
+            const sortedHistory = [...db.user.history].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const historyHtml = sortedHistory.length > 0 ? sortedHistory.map(h => `
+                <div class="flex items-center justify-between p-3 border-b border-gray-100 last:border-0">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center ${h.type === 'earn' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}">
+                            <i class="fas ${h.type === 'earn' ? 'fa-hand-holding-heart' : 'fa-shopping-basket'}"></i>
                         </div>
                         <div>
-                          <div className="font-medium text-gray-800">{record.desc}</div>
-                          <div className="text-xs text-gray-500">{record.date}</div>
+                            <p class="font-bold text-gray-800 text-sm">${h.title}</p>
+                            <p class="text-xs text-gray-400">${h.date}</p>
                         </div>
-                      </div>
-                      <div className={`font-bold ${record.type === 'earn' ? 'text-green-600' : 'text-orange-600'}`}>
-                        {record.type === 'earn' ? '+' : '-'}{record.amount}
-                      </div>
                     </div>
-                  ))}
-                  {user.history.length === 0 && (
-                    <div className="text-center text-gray-400 py-4">尚無紀錄</div>
-                  )}
+                    <span class="font-bold ${h.type === 'earn' ? 'text-green-600' : 'text-orange-600'}">
+                        ${h.type === 'earn' ? '+' : '-'}${h.amount}
+                    </span>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
+            `).join('') : '<p class="text-center text-gray-400 py-4 text-sm">暫無紀錄</p>';
 
-        {/* 4. 物資管理 (後台) */}
-        {activeTab === 'admin' && (
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <Gift className="mr-2 text-amber-500" />
-                新增捐贈物資
-              </h2>
-              <form onSubmit={handleAddItem} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">物品名稱</label>
-                    <input
-                      required
-                      type="text"
-                      value={newItem.name}
-                      onChange={e => setNewItem({...newItem, name: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                      placeholder="例如：有機白米"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">類別</label>
-                    <select
-                      value={newItem.category}
-                      onChange={e => setNewItem({...newItem, category: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                    >
-                      <option value="食品">食品</option>
-                      <option value="日用品">日用品</option>
-                      <option value="書籍">書籍</option>
-                      <option value="家電">家電</option>
-                      <option value="衣物">衣物</option>
-                      <option value="其他">其他</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">兌換所需時分券</label>
-                    <input
-                      required
-                      type="number"
-                      min="1"
-                      value={newItem.cost}
-                      onChange={e => setNewItem({...newItem, cost: parseInt(e.target.value)})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">庫存數量</label>
-                    <input
-                      required
-                      type="number"
-                      min="1"
-                      value={newItem.stock}
-                      onChange={e => setNewItem({...newItem, stock: parseInt(e.target.value)})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">捐贈者 (選填)</label>
-                    <input
-                      type="text"
-                      value={newItem.donor}
-                      onChange={e => setNewItem({...newItem, donor: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                      placeholder="例如：陳媽媽、匿名"
-                    />
-                  </div>
+            main.innerHTML = `
+                <div class="p-4 space-y-4 fade-in">
+                    <!-- Profile Card -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
+                        <div class="w-20 h-20 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center text-3xl text-gray-400">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-800">${db.user.name}</h2>
+                        <p class="text-gray-500 text-sm mb-4">會員編號: ${db.user.id}</p>
+                        
+                        <div class="bg-blue-50 rounded-xl p-4 inline-block w-full">
+                            <p class="text-sm text-blue-600 mb-1">現有時分</p>
+                            <div class="text-4xl font-extrabold text-blue-800 flex items-center justify-center gap-2">
+                                <i class="fas fa-clock text-2xl"></i> ${db.user.balance}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- History -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-700">時分紀錄</h3>
+                            <button onclick="clearHistory()" class="text-xs text-gray-400 hover:text-red-500">清除紀錄</button>
+                        </div>
+                        <div>
+                            ${historyHtml}
+                        </div>
+                    </div>
+                    
+                    <button onclick="resetSystem()" class="w-full py-3 text-sm text-gray-400 hover:text-red-500 mt-4">
+                        重置所有系統數據 (測試用)
+                    </button>
                 </div>
-                <button
-                  type="submit"
-                  className="w-full bg-gray-800 text-white py-3 rounded-lg font-bold hover:bg-gray-900 transition-colors flex justify-center items-center"
-                >
-                  <PlusCircle size={20} className="mr-2" />
-                  上架物資
-                </button>
-              </form>
-            </div>
+            `;
+        }
 
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-               <h3 className="font-bold text-gray-800 mb-4">目前庫存列表</h3>
-               <div className="overflow-x-auto">
-                 <table className="w-full text-sm text-left">
-                   <thead className="text-gray-500 bg-gray-50">
-                     <tr>
-                       <th className="px-4 py-2">名稱</th>
-                       <th className="px-4 py-2">類別</th>
-                       <th className="px-4 py-2">庫存</th>
-                       <th className="px-4 py-2">價格</th>
-                     </tr>
-                   </thead>
-                   <tbody>
-                     {items.map(item => (
-                       <tr key={item.id} className="border-b">
-                         <td className="px-4 py-3 font-medium">{item.name}</td>
-                         <td className="px-4 py-3 text-gray-500">{item.category}</td>
-                         <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded-full text-xs ${item.stock < 3 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                              {item.stock}
-                            </span>
-                         </td>
-                         <td className="px-4 py-3">{item.cost} 券</td>
-                       </tr>
-                     ))}
-                   </tbody>
-                 </table>
-               </div>
-            </div>
-          </div>
-        )}
+        function renderAdmin() {
+            const main = document.getElementById('main-content');
+            
+            main.innerHTML = `
+                <div class="p-4 space-y-6 fade-in">
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded shadow-sm">
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle text-yellow-500 mt-1 mr-3"></i>
+                            <div>
+                                <h3 class="font-bold text-yellow-800">同工操作模式</h3>
+                                <p class="text-sm text-yellow-700">在此發放時分給參與服事的弟兄姊妹，或上架新收到的捐贈物資。</p>
+                            </div>
+                        </div>
+                    </div>
 
-      </main>
-    </div>
-  );
-}
+                    <!-- Give Points -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <i class="fas fa-hand-holding-heart text-green-500"></i> 發放時分 (服事獎勵)
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">對象</label>
+                                <select class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                                    <option value="${db.user.id}">${db.user.name} (${db.user.id})</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">事由</label>
+                                <input type="text" id="service-title" placeholder="例如：敬拜隊服事" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">時分數量</label>
+                                <input type="number" id="service-points" value="1" min="1" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                            </div>
+                            <button onclick="adminGivePoints()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium shadow transition-colors">
+                                確認發放
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Add Item -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <i class="fas fa-plus-circle text-blue-500"></i> 新增物資
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">物資名稱</label>
+                                    <input type="text" id="item-title" placeholder="名稱" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">分類</label>
+                                    <select id="item-category" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                                        ${db.categories.map(c => c !== '全部' ? `<option value="${c}">${c}</option>` : '').join('')}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">兌換所需時分</label>
+                                    <input type="number" id="item-cost" value="1" min="1" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">數量</label>
+                                    <input type="number" id="item-stock" value="1" min="1" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                                </div>
+                            </div>
+                            <button onclick="adminAddItem()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium shadow transition-colors">
+                                上架物資
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- Logic Functions ---
+
+        function router(target) {
+            // Update Tab Styles
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                const icon = btn.querySelector('i');
+                const text = btn.querySelector('span');
+                
+                if (btn.dataset.target === target) {
+                    btn.classList.add('text-blue-600');
+                    btn.classList.remove('text-gray-400');
+                    // Simple animation for active tab
+                    icon.classList.add('scale-110');
+                } else {
+                    btn.classList.remove('text-blue-600');
+                    btn.classList.add('text-gray-400');
+                    icon.classList.remove('scale-110');
+                }
+            });
+
+            // Render Content
+            if (target === 'market') renderMarket();
+            if (target === 'profile') renderProfile();
+            if (target === 'admin') renderAdmin();
+        }
+
+        function redeemItem(itemId) {
+            const item = db.items.find(i => i.id === itemId);
+            if (!item) return;
+
+            if (db.user.balance < item.cost) {
+                showToast(`餘額不足！還差 ${item.cost - db.user.balance} 時分`, 'error');
+                return;
+            }
+            if (item.stock <= 0) {
+                showToast('手快有手慢無，已經換光了！', 'error');
+                return;
+            }
+
+            // Execute transaction
+            db.user.balance -= item.cost;
+            item.stock -= 1;
+            
+            // Add Record
+            db.user.history.push({
+                id: Date.now(),
+                type: 'spend',
+                title: `兌換: ${item.title}`,
+                amount: item.cost,
+                date: new Date().toISOString().split('T')[0]
+            });
+
+            saveDB();
+            showToast(`成功兌換：${item.title}`);
+            renderMarket(); // Re-render to show updated stock
+        }
+
+        function adminGivePoints() {
+            const title = document.getElementById('service-title').value.trim();
+            const points = parseInt(document.getElementById('service-points').value);
+
+            if (!title || points <= 0) {
+                showToast('請輸入正確的事由和數量', 'error');
+                return;
+            }
+
+            db.user.balance += points;
+            db.user.history.push({
+                id: Date.now(),
+                type: 'earn',
+                title: title,
+                amount: points,
+                date: new Date().toISOString().split('T')[0]
+            });
+
+            saveDB();
+            showToast(`已發放 ${points} 時分`);
+            // Clear inputs
+            document.getElementById('service-title').value = '';
+            document.getElementById('service-points').value = '1';
+        }
+
+        function adminAddItem() {
+            const title = document.getElementById('item-title').value.trim();
+            const category = document.getElementById('item-category').value;
+            const cost = parseInt(document.getElementById('item-cost').value);
+            const stock = parseInt(document.getElementById('item-stock').value);
+
+            if (!title || cost <= 0 || stock <= 0) {
+                showToast('資料不完整', 'error');
+                return;
+            }
+
+            const newItem = {
+                id: Date.now(),
+                title: title,
+                category: category,
+                cost: cost,
+                stock: stock,
+                image: 'box', // Default generic image logic
+                color: 'bg-indigo-100'
+            };
+
+            db.items.unshift(newItem); // Add to top
+            saveDB();
+            showToast('物資上架成功！');
+            
+            // Clear inputs
+            document.getElementById('item-title').value = '';
+            document.getElementById('item-stock').value = '1';
+        }
+
+        function clearHistory() {
+            if(confirm('確定要清除所有交易紀錄嗎？')) {
+                db.user.history = [];
+                saveDB();
+                renderProfile();
+                showToast('紀錄已清除');
+            }
+        }
+
+        function resetSystem() {
+            if(confirm('確定要重置系統嗎？所有自訂數據將消失。')) {
+                localStorage.removeItem(DB_KEY);
+                location.reload();
+            }
+        }
+
+        // Initialize
+        updateHeader();
+        router('market');
+
+    </script>
+</body>
+</html>
